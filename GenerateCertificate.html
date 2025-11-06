@@ -10,6 +10,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/interact.js/1.10.17/interact.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     :root {
       --bg: #F3F4F6;
@@ -559,6 +560,8 @@
 
         <div class="actions">
           <button type="submit" class="btn btn-primary">Generate Certificate</button>
+          <button type="button" id="randomDataBtn" class="btn"
+            style="background:#003a82; color:white;">Auto-generated</button>
           <button type="reset" class="btn btn-secondary">Reset Form</button>
         </div>
       </form>
@@ -680,8 +683,18 @@
 
       <!-- مجموعة التصدير -->
       <div class="control-group">
+        <label class="control-label">جودة التصدير</label>
+        <select id="exportQuality" class="font-select">
+          <option value="screen-2">Screen (2x) - سريع</option>
+          <option value="high-4" selected>High (4x) - جيد للطباعة خفيفة</option>
+          <option value="print-300">Print 300 DPI - طباعة عالية الجودة (ثقيل)</option>
+        </select>
+        <div style="font-size:12px; color:var(--muted); margin-top:6px;">ملاحظة: خيار 300 DPI قد يستغرق وقتاً ويحتاج
+          ذاكرة أكبر.</div>
+        <div style="height:8px"></div>
         <button class="control-btn" id="exportPDF">تصدير PDF</button>
         <button class="control-btn" id="exportPNG">تصدير PNG</button>
+        <button class="control-btn" id="exportExcel">تصدير Excel</button>
       </div>
     </div>
   </div>
@@ -1140,87 +1153,137 @@
       });
     }
 
-    // إعداد أزرار التصدير
+    // إعداد أزرار التصدير مع تحسين جودة الإخراج
     function setupExportButtons(studentName, courseName) {
-      // تصدير كصورة PNG
+      // ربط أزرار التصدير
       document.getElementById('downloadCertificateBtn').addEventListener('click', exportToPNG);
       document.getElementById('exportPNG').addEventListener('click', exportToPNG);
-
-      // تصدير كملف PDF
       document.getElementById('exportPDF').addEventListener('click', exportToPDF);
+      // زر تصدير Excel
+      const exportExcelBtn = document.getElementById('exportExcel');
+      if (exportExcelBtn) exportExcelBtn.addEventListener('click', exportToExcel);
 
-      // دالة تصدير الشهادة كصورة PNG
-      async function exportToPNG() {
+      // احصل على مقياس التصوير المطلوب حسب خيار الجودة
+      function getScaleForQuality(quality, container) {
+        if (!container) return 2;
+        if (quality === 'screen-2') return 2;
+        if (quality === 'high-4') return 4;
+        if (quality === 'print-300') {
+          try {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+            const pdfWidthMM = pdf.internal.pageSize.getWidth(); // mm
+            const pixelsPerMM = 300 / 25.4; // 300 DPI
+            const requiredPx = Math.ceil(pdfWidthMM * pixelsPerMM);
+            const currentPx = Math.max(container.scrollWidth, container.offsetWidth || 1);
+            // احسب مقياس تقريبي بحيث يكون عرض الكانفس الناتج على الأقل مساويًا لمتطلبات الـ300 DPI
+            const scale = Math.max(4, Math.ceil(requiredPx / currentPx));
+            return scale;
+          } catch (e) {
+            return 4;
+          }
+        }
+        return 4;
+      }
+
+      // تصدير بيانات النموذج إلى ملف Excel (.xlsx)
+      function exportToExcel() {
         try {
-          // إخفاء لوحة التحكم مؤقتاً قبل التصدير
-          const controlsPanel = document.getElementById('controlsPanel');
-          controlsPanel.style.display = 'none';
+          const fields = [
+            ['Input', 'Value'],
+            ['Student Name', document.getElementById('studentName').value || ''],
+            ['Score / Result', document.getElementById('scoreResult').value || ''],
+            ['Course Name', document.getElementById('courseName').value || ''],
+            ['Certificate ID', document.getElementById('certificateId').value || ''],
+            ['Instructor Name', document.getElementById('instructorName').value || ''],
+            ['HR Representative', document.getElementById('hrRepresentative').value || ''],
+            ['Certificate Date', document.getElementById('certificateDate').value || ''],
+            ['Student Email', document.getElementById('studentEmail').value || ''],
+            ['Notes', document.getElementById('notes').value || '']
+          ];
 
-          const certContent = document.getElementById('certContent');
-          // نضيف useCORS حتى يسمح باستخدام الصور المحلية أو من روابط خارجية
-          const canvas = await html2canvas(certContent, {
-            scale: 2,
-            useCORS: true,
-            allowTaint: true,
-            backgroundColor: null
-          });
+          const ws = XLSX.utils.aoa_to_sheet(fields);
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, 'CertificateData');
 
-          // إعادة إظهار لوحة التحكم
-          controlsPanel.style.display = 'block';
+          const student = document.getElementById('studentName').value.trim() || 'certificate_data';
+          const safeName = student.replace(/\s+/g, '_');
+          XLSX.writeFile(wb, `${safeName}_data.xlsx`);
+        } catch (err) {
+          console.error('Excel export error:', err);
+          alert('حدث خطأ أثناء تصدير ملف Excel. تأكد أن المكتبة متاحة في الـ head.');
+        }
+      }
 
+      async function renderCanvas(certContent, scale) {
+        // إعداد خيارات html2canvas مع التعامل مع CORS
+        const opts = {
+          scale: scale,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: null,
+          logging: false
+        };
+        return await html2canvas(certContent, opts);
+      }
+
+      // دالة تصدير الشهادة كصورة PNG (جودة عالية)
+      async function exportToPNG() {
+        const quality = document.getElementById('exportQuality').value;
+        const controlsPanel = document.getElementById('controlsPanel');
+        const certContent = document.getElementById('certContent');
+        controlsPanel.style.display = 'none';
+        try {
+          const scale = getScaleForQuality(quality, certContent);
+          const canvas = await renderCanvas(certContent, scale);
+          // تحويل الكانفس إلى blob لخفض الذاكرة عند التنزيل
+          const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
           const link = document.createElement('a');
           const safeName = studentName.replace(/\s+/g, '_');
           const safeCourse = courseName.replace(/\s+/g, '_');
           link.download = `${safeName}-${safeCourse}.png`;
-          link.href = canvas.toDataURL('image/png');
+          link.href = URL.createObjectURL(blob);
           link.click();
+          URL.revokeObjectURL(link.href);
         } catch (err) {
           console.error(err);
-          alert('⚠️ حدث خطأ أثناء إنشاء الصورة. تأكد أن الصفحة مكتملة وأن الصور متوفرة.');
+          alert('⚠️ حدث خطأ أثناء إنشاء الصورة عالية الجودة. جرب خيار جودة أقل إذا استمر الخطأ.');
+        } finally {
+          controlsPanel.style.display = 'block';
         }
       }
 
-      // دالة تصدير الشهادة كملف PDF
+      // دالة تصدير الشهادة كملف PDF (جودة عالية للطباعة)
       async function exportToPDF() {
+        const quality = document.getElementById('exportQuality').value;
+        const controlsPanel = document.getElementById('controlsPanel');
+        const certContent = document.getElementById('certContent');
+        controlsPanel.style.display = 'none';
         try {
-          // إخفاء لوحة التحكم مؤقتاً قبل التصدير
-          const controlsPanel = document.getElementById('controlsPanel');
-          controlsPanel.style.display = 'none';
-
-          const certContent = document.getElementById('certContent');
-          const canvas = await html2canvas(certContent, {
-            scale: 2,
-            useCORS: true,
-            allowTaint: true,
-            backgroundColor: null
-          });
-
-          // إعادة إظهار لوحة التحكم
-          controlsPanel.style.display = 'block';
+          // احسب المقياس المناسب
+          const scale = getScaleForQuality(quality, certContent);
+          const canvas = await renderCanvas(certContent, scale);
 
           // إنشاء ملف PDF
           const { jsPDF } = window.jspdf;
-          const pdf = new jsPDF({
-            orientation: 'landscape',
-            unit: 'mm',
-            format: 'a4'
-          });
-
-          // إضافة الصورة إلى ملف PDF
-          const imgData = canvas.toDataURL('image/png');
-          const imgProps = pdf.getImageProperties(imgData);
+          const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
           const pdfWidth = pdf.internal.pageSize.getWidth();
+
+          // استخدم صورة JPEG مضغوطة مع جودة عالية لتقليل حجم الملف مع الحفاظ على التفاصيل
+          const imgData = canvas.toDataURL('image/jpeg', 0.95);
+          const imgProps = pdf.getImageProperties(imgData);
           const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
-          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+          pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
 
-          // تنزيل ملف PDF
           const safeName = studentName.replace(/\s+/g, '_');
           const safeCourse = courseName.replace(/\s+/g, '_');
           pdf.save(`${safeName}-${safeCourse}.pdf`);
         } catch (err) {
           console.error(err);
-          alert('⚠️ حدث خطأ أثناء إنشاء ملف PDF. تأكد أن الصفحة مكتملة وأن الصور متوفرة.');
+          alert('⚠️ حدث خطأ أثناء إنشاء ملف PDF عالي الجودة. جرب جودة أقل إذا استمر الخطأ.');
+        } finally {
+          controlsPanel.style.display = 'block';
         }
       }
     }
@@ -1230,6 +1293,69 @@
       document.getElementById('emailError').textContent = '';
       document.getElementById('certificateId').value = '';
       document.getElementById('certificateOutput').style.display = 'none';
+    });
+
+    // توليد بيانات عشوائية للاختبار
+    function getRandomItem(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function fillRandomData() {
+      const firstNames = [
+        'John', 'Sarah', 'Michael', 'Emma', 'David', 'Lisa', 'James', 'Emily',
+        'Mohamed', 'Aisha', 'Omar', 'Layla', 'Ali', 'Fatima', 'Hassan', 'Mona',
+        'Noah', 'Olivia', 'Liam', 'Sophia', 'Mason', 'Isabella', 'Ethan', 'Mia',
+        'Lucas', 'Amelia', 'Benjamin', 'Charlotte', 'Logan', 'Harper', 'Jacob', 'Evelyn',
+        'Carlos', 'Sofia', 'Mateo', 'Valentina', 'Hiroshi', 'Yuki', 'Sven', 'Ingrid',
+        'Ibrahim', 'Noura', 'Zain', 'Rania'
+      ];
+      const lastNames = [
+        'Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Miller', 'Davis', 'Garcia',
+        'Rodriguez', 'Wilson', 'Martinez', 'Anderson', 'Taylor', 'Thomas', 'Hernandez',
+        'Moore', 'Martin', 'Jackson', 'Thompson', 'White', 'Lopez', 'Lee', 'Gonzalez',
+        'Harris', 'Clark', 'Lewis', 'Robinson', 'Walker', 'Perez', 'Hall', 'Young',
+        'Allen', 'Sanchez', 'Wright', 'King', 'Scott', 'Green', 'Adams', 'Baker',
+        'Nassar', 'Al-Farsi', 'El-Sayed', 'Khan', 'Hassan'
+      ];
+      const courses = ['Machine Learning', 'ReactJS', 'Data Science', 'Flutter Mobile App', 'Programming Concepts'];
+      const instructors = ['Dr. Samir', 'Eng. Rana', 'Mr. Karim', 'Ms. Dina'];
+      const hrs = ['Amina', 'Hassan', 'Omar', 'Mona'];
+
+      const first = getRandomItem(firstNames);
+      const last = getRandomItem(lastNames);
+      const student = `${first} ${last}`;
+      document.getElementById('studentName').value = student;
+      document.getElementById('scoreResult').value = `${Math.floor(Math.random() * 31) + 70}%`;
+      const course = getRandomItem(courses);
+      document.getElementById('courseName').value = course;
+      document.getElementById('instructorName').value = getRandomItem(instructors);
+      document.getElementById('hrRepresentative').value = getRandomItem(hrs);
+
+      // بريد إلكتروني بسيط للاختبار
+      const emailLocal = (first + '.' + last).replace(/\s+/g, '').toLowerCase();
+      document.getElementById('studentEmail').value = `${emailLocal}@example.com`;
+
+      // تاريخ اليوم
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      document.getElementById('certificateDate').value = `${yyyy}-${mm}-${dd}`;
+
+      // توليد رقم الشهادة
+      generateCertificateId();
+
+      // توليد الشهادة تلقائياً لعرض النتيجة بسرعة
+      setTimeout(() => {
+        generateCertificate();
+      }, 100);
+    }
+
+    // ربط زر توليد البيانات العشوائية
+    document.addEventListener('click', function (e) {
+      if (e.target && e.target.id === 'randomDataBtn') {
+        fillRandomData();
+      }
     });
 
     // إضافة وظيفة زر المساعدة
