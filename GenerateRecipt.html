@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Payment Entry</title>
+  <link rel="icon" href="CincoLogo.png" type="image/png">
+  <!-- Google Font: Cairo -->
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <!-- External libraries without integrity checks -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" crossorigin="anonymous"
+    referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"
+    referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" crossorigin="anonymous"
+    referrerpolicy="no-referrer"></script>
+  <style>
+    :root {
+      --bg: #F3F4F6;
+      --card: #FFFFFF;
+      --primary: #6D28D9;
+      --primary-700: #5B21B6;
+      --accent: #EDE9FE;
+      --text: #090086;
+      --text_1: #ea8900;
+      --muted: #081933;
+      --white: #FFFFFF;
+      --success: #10B981;
+      --danger: #EF4444;
+      --radius: 12px;
+      --shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Cairo', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background-image: url('CincoBackground.png');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    header {
+      padding: 32px 20px 16px;
+      text-align: center;
+    }
+
+    .title {
+      margin: 0;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      font-size: 2rem;
+      color: var(--text_1)
+    }
+
+    .subtitle {
+      color: var(--white);
+      margin-top: 6px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px 20px 40px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+    }
+
+    .card h2 {
+      margin: 0 0 14px 0;
+      font-size: 1.5rem;
+      color: var(--primary);
+    }
+
+    form .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    @media (max-width: 600px) {
+      form .row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    label {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 12px 12px;
+      border-radius: 10px;
+      border: 1px solid #e5e7eb;
+      outline: none;
+      transition: border 0.15s ease, box-shadow 0.15s ease;
+      background: #fff;
+      font-size: 15px;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px var(--accent);
+    }
+
+    .actions {
+      margin-top: 16px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      appearance: none;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: var(--primary);
+      color: #fff;
+      cursor: pointer;
+      transition: transform 0.03s ease, background 0.2s ease;
+      font-weight: bold;
+    }
+
+    .btn:hover {
+      background: var(--primary-700);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .btn.secondary {
+      background: #eef3fb;
+      color: var(--primary);
+    }
+
+    .btn.back-home {
+      background: #f59e0b;
+      color: #fff;
+    }
+
+    .btn.back-home:hover {
+      background: #d97706;
+    }
+
+    .note {
+      font-size: 22px;
+      font-weight: bold;
+      color: var(--muted);
+    }
+
+    /* Receipt */
+    .receipt-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #0073ff;
+      padding-bottom: 12px;
+      margin-bottom: 12px;
+    }
+
+    .logo-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-wrap img {
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+
+    .receipt-title {
+      font-size: 22px;
+      margin: 0;
+    }
+
+    .receipt-meta {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .receipt-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    @media (max-width: 600px) {
+      .receipt-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .kvp {
+      display: flex;
+      gap: 6px;
+    }
+
+    .kvp .k {
+      color: var(--muted);
+      min-width: 140px;
+    }
+
+    .totals {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed #e5e7eb;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .sign {
+      margin-top: 16px;
+      border-top: 1px dashed #e5e7eb;
+      padding-top: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .footer {
+      color: var(--muted);
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      box-shadow: var(--shadow);
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .toast.success {
+      border-color: #d1fae5;
+    }
+
+    /* Print: only print the receipt card */
+    @media print {
+      body * {
+        visibility: hidden !important;
+      }
+
+      #receiptCard,
+      #receiptCard * {
+        visibility: visible !important;
+      }
+
+      #receiptCard {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+      }
+    }
+
+    /* Modal */
+    .modal {
+      position: fixed;
+      z-index: 1;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.4);
+    }
+
+    .modal-content {
+      background-color: #fefefe;
+      margin: 15% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%;
+      max-width: 500px;
+      border-radius: var(--radius);
+    }
+
+    .close-btn {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .close-btn:hover,
+    .close-btn:focus {
+      color: black;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    /* Excel editor table */
+    .excel-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      overflow: auto;
+      max-height: 50vh;
+      display: block;
+    }
+
+    .excel-table th,
+    .excel-table td {
+      border: 1px solid #e5e7eb;
+      padding: 8px;
+      text-align: left;
+      min-width: 100px;
+    }
+
+    .excel-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      justify-content: flex-end;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1 class="title">Student Payment Entry – Sales Department</h1>
+    <p class="subtitle">Generate and print student payment receipts easily.</p>
+    <button class="btn secondary" id="infoBtn">App Info</button>
+  </header>
+
+  <div id="infoModal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close-btn" id="closeBtn">&times;</span>
+      <h2>App Information</h2>
+      <p>This application allows the sales department to generate and print student payment receipts easily.</p>
+      <h3>Developer Details</h3>
+      <p><strong>Name:</strong> Eng. Abdulraouf Ahmed</p>
+      <p><strong>Email:</strong> abdulroufahmedmanage@gmail.com</p>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="grid">
+      <!-- Payment Form Card -->
+      <div class="card" id="formCard">
+        <h2>Student Payment Form</h2>
+        <form id="paymentForm" novalidate>
+          <div class="row">
+            <div>
+              <label for="studentName">Student Full Name</label>
+              <input type="text" id="studentName" placeholder="Full Arabic or English name" required />
+            </div>
+            <div>
+              <label for="studentId">Student ID / Code</label>
+              <input type="text" id="studentId" placeholder="Unique student identifier" required />
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label for="email">Email Address</label>
+              <input type="email" id="email" placeholder="example@domain.com" required />
+            </div>
+            <div>
+              <label for="phone">Phone Number</label>
+              <input type="tel" id="phone" placeholder="For contact" required />
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label for="course">Course Name</label>
+              <select id="course" required>
+                <option value="" disabled selected>Select a course</option>
+                <option>Machine Learning</option>
+                <option>Artificial Intelligence</option>
+                <option>ReactJS</option>
+                <option>Data Science</option>
+                <option>Database Diploma</option>
+                <option>Programming Concepts</option>
+                <option>Flutter Mobile App</option>
+              </select>
+            </div>
+            <div>
+              <label for="coursePrice">Course Price</label>
+              <input type="number" id="coursePrice" placeholder="Auto-filled based on course" required />
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label for="promoCode">Promo Code</label>
+              <select id="promoCode">
+                <option value="" selected>No Promo Code</option>
+                <!-- Promo codes will be loaded here -->
+              </select>
+            </div>
+            <div>
+              <label for="discount">Discount Amount</label>
+              <input type="number" id="discount" placeholder="Discount amount" readonly />
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label for="amountPaid">Amount Paid</label>
+              <input type="number" id="amountPaid" placeholder="Actual paid amount" required />
+            </div>
+            <div>
+              <label for="method">Payment Method</label>
+              <select id="method" required>
+                <option value="" disabled selected>Select method</option>
+                <option>Mobile Wallets</option>
+                <option>InstaPay</option>
+                <option>Bank Transfer</option>
+                <option>Credit Card</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label for="date">Payment Date</label>
+              <input type="date" id="date" required />
+            </div>
+            <div>
+              <label for="logoUpload">Academy Logo (Uploaded Well)</label>
+              <input type="file" id="logoUpload" accept="image/*" />
+            </div>
+          </div>
+
+          <div>
+            <label for="notes">Additional Notes</label>
+            <textarea id="notes" rows="3" placeholder="Optional"></textarea>
+          </div>
+
+          <div style="margin-top:12px;">
+            <label for="promoSelect">Promo Code (اختر من قائمة الأكواد)</label>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <select id="promoSelect">
+                <option value="" selected>-- No promo --</option>
+              </select>
+              <button type="button" class="btn secondary" id="loadPromoBtn">Load Promo Codes</button>
+            </div>
+            <input type="file" id="promoFileInput" accept=".xlsx,.xls" class="hidden" />
+            <small style="color:var(--muted);">The promo codes are read from the second column of the Excel file
+              (Promo_Codes.xlsx). You can load the file or use the built-in viewer to edit.</small>
+          </div>
+
+          <div class="actions">
+            <button type="submit" class="btn" id="generateBtn">Generate Receipt</button>
+            <button type="button" class="btn secondary" id="emailBtn">Send by Email (optional)</button>
+            <button type="button" class="btn secondary" id="viewExcelBtn">View / Edit Promo Excel</button>
+            <a href="index.html" class="btn back-home">← Back to Home</a>
+          </div>
+          <p class="note">All fields marked required must be filled before generating a receipt.</p>
+        </form>
+      </div>
+
+      <!-- Receipt Preview Card -->
+      <div class="card hidden" id="receiptCard">
+        <div class="receipt-header">
+          <div class="logo-wrap">
+            <img id="academyLogo"
+              src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjNGE5MGUyIi8+PHRleHQgeD0iNDAiIHk9IjQwIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGFsaWdubWVudC1iYXNlbGluZT0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSI+TE9HTzwvdGV4dD48L3N2Zz4="
+              alt="Academy Logo" />
+            <div>
+              <h3 class="receipt-title">Payment Receipt</h3>
+              <div class="receipt-meta" id="receiptMeta">Receipt #: — | Date: —</div>
+            </div>
+          </div>
+          <div class="receipt-meta" id="receiptTime">—</div>
+        </div>
+
+        <div class="receipt-grid">
+          <div class="kvp">
+            <div class="k">Student Name:</div>
+            <div id="rName">—</div>
+          </div>
+          <div class="kvp">
+            <div class="k">Student ID:</div>
+            <div id="rId">—</div>
+          </div>
+          <div class="kvp">
+            <div class="k">Email:</div>
+            <div id="rEmail">—</div>
+          </div>
+          <div class="kvp">
+            <div class="k">Phone:</div>
+            <div id="rPhone">—</div>
+          </div>
+          <div class="kvp">
+            <div class="k">Course:</div>
+            <div id="rCourse">—</div>
+          </div>
+          <div class="kvp">
+            <div class="k">Payment Method:</div>
+            <div id="rMethod">—</div>
+          </div>
+        </div>
+
+        <div class="totals">
+          <div class="kvp">
+            <div class="k">Course Price:</div>
+            <div id="rPrice">—</div>
+          </div>
+          <div class="kvp">
+            <div class="k">Amount Paid:</div>
+            <div id="rPaid">—</div>
+          </div>
+          <div class="kvp">
+            <div class="k">Promo Code:</div>
+            <div id="rPromoCode">—</div>
+          </div>
+          <div class="kvp">
+            <div class="k">Price After Discount:</div>
+            <div id="rDiscountedPrice">—</div>
+          </div>
+          <div class="kvp">
+            <div class="k">Remaining:</div>
+            <div id="rBalance">—</div>
+          </div>
+          <div class="kvp">
+            <div class="k">Payment Date:</div>
+            <div id="rDate">—</div>
+          </div>
+        </div>
+
+        <div class="sign">
+          <div>
+            <div class="kvp">
+              <div class="k">Sales Officer:</div>
+              <div id="rOfficer">—</div>
+            </div>
+            <small class="receipt-meta">Signature:</small>
+            <div style="height:40px;border-bottom:1px dashed #e5e7eb; width:220px;"></div>
+          </div>
+          <div class="receipt-meta">Thank you for your payment.</div>
+        </div>
+
+        <div class="actions" style="margin-top: 16px;">
+          <button class="btn" id="printBtn">🖨️ Print Receipt</button>
+          <button class="btn secondary" id="pdfBtn">💾 Download as PDF</button>
+          <button class="btn secondary" id="imageBtn">🖼️ Export as Image</button>
+          <button class="btn secondary" id="excelBtn">📄 Export to Excel</button>
+          <button class="btn secondary" id="resetBtn">🔄 Reset Form</button>
+        </div>
+        <div class="footer">For any inquiries, please contact the academy’s sales department.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Excel editor modal -->
+  <div id="excelModal" class="modal hidden">
+    <div class="modal-content" style="max-width:900px;">
+      <span class="close-btn" id="excelCloseBtn">&times;</span>
+      <h2>Promo Codes - Excel Editor</h2>
+
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+        <button id="excelLoadBtn" class="btn">Load Excel</button>
+        <button id="excelDownloadBtn" class="btn">Download Excel</button>
+        <button id="excelReplaceSelectBtn" class="btn secondary">Apply to Promo Select</button>
+        <input type="file" id="excelFileInput" accept=".xlsx,.xls" class="hidden" />
+      </div>
+
+      <div style="overflow:auto; max-height:60vh;">
+        <table class="excel-table" id="excelTable">
+          <thead>
+            <tr id="excelThead"></tr>
+          </thead>
+          <tbody id="excelTbody"></tbody>
+        </table>
+      </div>
+
+      <div class="excel-actions">
+        <button id="excelCloseSaveBtn" class="btn secondary">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast hidden" id="toast"><span id="toastIcon">✅</span><span id="toastText">Receipt created
+      successfully.</span></div>
+
+  <script>
+    // Updated course list and prices
+    const courses = {
+      'Machine Learning': 2200,
+      'Artificial Intelligence': 1800,
+      'ReactJS': 2100,
+      'Data Science': 2800,
+      // Database Diploma has a special offer for first 150 students: original price 1250, 90% off => 125
+      'Database Diploma': 1250,
+      'Programming Concepts': 1500,
+      'Flutter Mobile App': 2850,
+    };
+
+    const form = document.getElementById('paymentForm');
+    const studentName = document.getElementById('studentName');
+    const studentId = document.getElementById('studentId');
+    const email = document.getElementById('email');
+    const phone = document.getElementById('phone');
+    const course = document.getElementById('course');
+    const coursePrice = document.getElementById('coursePrice');
+    const amountPaid = document.getElementById('amountPaid');
+    const method = document.getElementById('method');
+    const date = document.getElementById('date');
+    const notes = document.getElementById('notes');
+    const logoUpload = document.getElementById('logoUpload');
+
+    const receiptCard = document.getElementById('receiptCard');
+    const academyLogo = document.getElementById('academyLogo');
+    const receiptMeta = document.getElementById('receiptMeta');
+    const receiptTime = document.getElementById('receiptTime');
+    const rName = document.getElementById('rName');
+    const rId = document.getElementById('rId');
+    const rEmail = document.getElementById('rEmail');
+    const rPhone = document.getElementById('rPhone');
+    const rCourse = document.getElementById('rCourse');
+    const rMethod = document.getElementById('rMethod');
+    const rPrice = document.getElementById('rPrice');
+    const rPaid = document.getElementById('rPaid');
+    const rBalance = document.getElementById('rBalance');
+    const rDate = document.getElementById('rDate');
+    const rOfficer = document.getElementById('rOfficer');
+
+    const rPromoCode = document.getElementById('rPromoCode');
+    const rDiscountedPrice = document.getElementById('rDiscountedPrice');
+
+    const printBtn = document.getElementById('printBtn');
+    const pdfBtn = document.getElementById('pdfBtn');
+    const imageBtn = document.getElementById('imageBtn');
+    const excelBtn = document.getElementById('excelBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const emailBtn = document.getElementById('emailBtn');
+    const infoBtn = document.getElementById('infoBtn');
+    const infoModal = document.getElementById('infoModal');
+    const closeBtn = document.getElementById('closeBtn');
+
+    const toast = document.getElementById('toast');
+    const toastText = document.getElementById('toastText');
+
+    // Default date to today
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    date.value = `${yyyy}-${mm}-${dd}`;
+
+    // Auto-fill price based on course
+    course.addEventListener('change', () => {
+      const val = course.value;
+      if (!val) return;
+      const entry = courses[val];
+      if (entry === undefined) {
+        coursePrice.value = '';
+        return;
+      }
+      // Handle special object for Database Diploma
+      if (typeof entry === 'object' && entry !== null) {
+        // Use the special price for auto-fill
+        coursePrice.value = entry.specialPrice;
+        // show a small note in the price field's placeholder (visual hint)
+        coursePrice.placeholder = entry.note;
+      } else {
+        coursePrice.value = entry;
+        coursePrice.placeholder = '';
+      }
+    });
+    //Make automatic upload of logo when user click on generate button the photo in (CincoLogo.png)
+    // make the backgroun of automated logo in (081933 )//
+    academyLogo.style.backgroundColor = '#081933';
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (!validateForm()) return;
+      // Generate receipt
+      genReceipt();
+      // Show success toast
+      showToast('Receipt created successfully.');
+    });
+
+    // Default academy logo (use provided image) and upload preview
+    const defaultLogoSrc = 'CincoLogo.png';
+    academyLogo.src = defaultLogoSrc;
+
+    logoUpload.addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => { academyLogo.src = reader.result; };
+      reader.readAsDataURL(file);
+    });
+
+    function showToast(message) {
+      toastText.textContent = message;
+      toast.classList.remove('hidden');
+      toast.classList.add('success');
+      setTimeout(() => toast.classList.add('hidden'), 2500);
+    }
+
+    function validateForm() {
+      const required = [studentName, studentId, email, phone, course, coursePrice, amountPaid, method, date];
+      let valid = true;
+      required.forEach((el) => {
+        if (!el.value) { valid = false; el.style.borderColor = '#dc2626'; }
+        else { el.style.borderColor = '#e5e7eb'; }
+      });
+      // Basic email format check
+      const emailValid = /.+@.+\..+/.test(email.value);
+      if (!emailValid) { valid = false; email.style.borderColor = '#dc2626'; }
+      return valid;
+    }
+
+    function genReceiptNumber() {
+      const ts = Date.now().toString().slice(-6);
+      const rnd = Math.floor(Math.random() * 90 + 10); // 2 digits
+      return `RCP-${ts}${rnd}`;
+    }
+
+    function genPrintJobCode() {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let result = '';
+      for (let i = 0; i < 8; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return `JOB-${result}`;
+    }
+
+    // Format numbers for Egyptian Pounds (EGP).
+    // We format the numeric part with western digits and append the Arabic abbreviation for EGP (ج.م)
+    function formatCurrency(n) {
+      const formatted = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+      return `${formatted} ج.م`;
+    }
+
+    function getDiscountFromPromoCode(promoCode) {
+      if (!currentWorkbook || !promoCode) {
+        return 0;
+      }
+
+      const firstSheet = currentWorkbook.SheetNames[0];
+      const ws = currentWorkbook.Sheets[firstSheet];
+      const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        if (row && row[1] === promoCode) {
+          return Number(row[2] || 0);
+        }
+      }
+
+      return 0;
+    }
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (!validateForm()) {
+        showToast('Please fill all required fields correctly.');
+        return;
+      }
+      const price = Number(coursePrice.value || 0);
+      const paid = Number(amountPaid.value || 0);
+
+      const selectedPromoCode = promoSelect.value;
+      const discount = getDiscountFromPromoCode(selectedPromoCode);
+      const discountedPrice = Math.max(price - discount, 0);
+      const balance = Math.max(discountedPrice - paid, 0);
+
+      // Populate receipt
+      const receiptNo = genReceiptNumber();
+      const printJobCode = genPrintJobCode();
+      const now = new Date();
+      receiptMeta.textContent = `Receipt #: ${receiptNo} | Date: ${date.value} | Job Code: ${printJobCode}`;
+      receiptTime.textContent = now.toLocaleString();
+
+      rName.textContent = studentName.value;
+      rId.textContent = studentId.value;
+      rEmail.textContent = email.value;
+      rPhone.textContent = phone.value;
+      rCourse.textContent = course.value;
+      rMethod.textContent = method.value;
+      rPrice.textContent = formatCurrency(price);
+      rPaid.textContent = formatCurrency(paid);
+      rBalance.textContent = formatCurrency(balance);
+      rDate.textContent = date.value;
+      rOfficer.textContent = 'Sales Department';
+      rPromoCode.textContent = selectedPromoCode || '—';
+      rDiscountedPrice.textContent = formatCurrency(discountedPrice);
+
+      receiptCard.classList.remove('hidden');
+      showToast('Receipt created successfully.');
+    });
+
+    printBtn.addEventListener('click', () => window.print());
+
+    pdfBtn.addEventListener('click', () => {
+      const element = receiptCard;
+      const actionsDiv = element.querySelector('.actions');
+      const footerDiv = element.querySelector('.footer');
+
+      // Hide action buttons before generating PDF
+      actionsDiv.style.display = 'none';
+
+      const opt = {
+        margin: 10,
+        filename: `Receipt_${studentName.value || 'Student'}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: true, allowTaint: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      // Show processing message
+      showToast('Generating PDF, please wait...');
+
+      // Use promise chain for better error handling
+      html2pdf().set(opt).from(element).save()
+        .then(() => {
+          // Show action buttons again after PDF is generated
+          actionsDiv.style.display = 'flex';
+        })
+        .catch(error => {
+          console.error('PDF generation error:', error);
+          showToast('Error generating PDF. Please try again.');
+          // Show action buttons again in case of error
+          actionsDiv.style.display = 'flex';
+        });
+    });
+
+    imageBtn.addEventListener('click', () => {
+      // Show processing message
+      showToast('Generating image, please wait...');
+
+      // Hide action buttons before generating image
+      const actionsDiv = receiptCard.querySelector('.actions');
+      actionsDiv.style.display = 'none';
+
+      // Improved html2canvas options
+      html2canvas(receiptCard, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: true,
+        backgroundColor: '#ffffff'
+      }).then(canvas => {
+        try {
+          const link = document.createElement('a');
+          link.download = `Receipt_${studentName.value || 'Student'}.png`;
+          link.href = canvas.toDataURL('image/png');
+          document.body.appendChild(link); // Needed for Firefox
+          link.click();
+          document.body.removeChild(link);
+          showToast('Image downloaded successfully.');
+        } catch (error) {
+          console.error('Image export error:', error);
+          showToast('Error exporting image. Please try again.');
+        }
+        // Show action buttons again after image is generated
+        actionsDiv.style.display = 'flex';
+      }).catch(error => {
+        console.error('Canvas generation error:', error);
+        showToast('Error generating image. Please try again.');
+        // Show action buttons again in case of error
+        actionsDiv.style.display = 'flex';
+      });
+    });
+
+    excelBtn.addEventListener('click', () => {
+      const data = [
+        ['Student Name', studentName.value],
+        ['Student ID', studentId.value],
+        ['Email', email.value],
+        ['Phone', phone.value],
+        ['Course', course.value],
+        ['Course Price', coursePrice.value],
+        ['Amount Paid', amountPaid.value],
+        ['Payment Method', method.value],
+        ['Payment Date', date.value],
+        ['Notes', notes.value],
+      ];
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Payment Details");
+      XLSX.writeFile(wb, `Payment_${studentName.value || 'Student'}.xlsx`);
+    });
+
+    resetBtn.addEventListener('click', () => {
+      form.reset();
+      // restore default logo
+      academyLogo.src = defaultLogoSrc;
+      receiptCard.classList.add('hidden');
+      date.value = `${yyyy}-${mm}-${dd}`; // restore default today
+      showToast('Form reset.');
+    });
+
+    emailBtn.addEventListener('click', () => {
+      const subject = encodeURIComponent('Payment Receipt');
+      const bodyLines = [
+        `Student: ${studentName.value}`,
+        `ID: ${studentId.value}`,
+        `Course: ${course.value}`,
+        `Price: ${coursePrice.value}`,
+        `Paid: ${amountPaid.value}`,
+        `Method: ${method.value}`,
+        `Date: ${date.value}`,
+        '',
+        'Thank you for your payment.'
+      ];
+      const body = encodeURIComponent(bodyLines.join('\n'));
+      const mailto = `mailto:${email.value}?subject=${subject}&body=${body}`;
+      window.location.href = mailto;
+    });
+
+    infoBtn.addEventListener('click', () => {
+      infoModal.classList.remove('hidden');
+    });
+
+    closeBtn.addEventListener('click', () => {
+      infoModal.classList.add('hidden');
+    });
+
+    window.addEventListener('click', (e) => {
+      if (e.target == infoModal) {
+        infoModal.classList.add('hidden');
+      }
+    });
+
+    // Promo / Excel integration
+    const loadPromoBtn = document.getElementById('loadPromoBtn');
+    const promoFileInput = document.getElementById('promoFileInput');
+    const promoSelect = document.getElementById('promoSelect');
+    const viewExcelBtn = document.getElementById('viewExcelBtn');
+
+    // Excel modal elements
+    const excelModal = document.getElementById('excelModal');
+    const excelCloseBtn = document.getElementById('excelCloseBtn');
+    const excelCloseSaveBtn = document.getElementById('excelCloseSaveBtn');
+    const excelFileInput = document.getElementById('excelFileInput');
+    const excelLoadBtn = document.getElementById('excelLoadBtn');
+    const excelDownloadBtn = document.getElementById('excelDownloadBtn');
+    const excelTbody = document.getElementById('excelTbody');
+    const excelThead = document.getElementById('excelThead');
+    const excelReplaceSelectBtn = document.getElementById('excelReplaceSelectBtn');
+
+    // Keep a reference to currently loaded workbook
+    let currentWorkbook = null;
+
+    function populatePromoSelectFromWorkbook(wb) {
+      try {
+        const firstSheet = wb.SheetNames[0];
+        const ws = wb.Sheets[firstSheet];
+        const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+        const codes = [];
+        for (let i = 0; i < rows.length; i++) {
+          const row = rows[i];
+          if (!row) continue;
+          const val = row[1]; // second column
+          if (val !== undefined && val !== null && String(val).trim() !== '') codes.push(String(val).trim());
+        }
+        // Unique
+        const unique = [...new Set(codes)];
+        // Clear and populate select
+        promoSelect.innerHTML = '<option value="" selected>-- No promo --</option>';
+        unique.forEach(code => {
+          const opt = document.createElement('option');
+          opt.value = code;
+          opt.textContent = code;
+          promoSelect.appendChild(opt);
+        });
+        showToast('Promo codes loaded.');
+      } catch (err) {
+        console.error('populatePromoSelectFromWorkbook error', err);
+        showToast('Error parsing promo codes.');
+      }
+    }
+
+    function renderWorkbookToTable(wb) {
+      excelTbody.innerHTML = '';
+      excelThead.innerHTML = '';
+      if (!wb) return;
+      const first = wb.SheetNames[0];
+      const ws = wb.Sheets[first];
+      const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+      if (rows.length === 0) return;
+      // build header from longest row
+      const maxCols = Math.max(...rows.map(r => (r ? r.length : 0)));
+      for (let c = 0; c < maxCols; c++) {
+        const th = document.createElement('th');
+        th.textContent = `Col ${c + 1}`;
+        excelThead.appendChild(th);
+      }
+      rows.forEach((r, ri) => {
+        const tr = document.createElement('tr');
+        for (let c = 0; c < maxCols; c++) {
+          const td = document.createElement('td');
+          td.contentEditable = 'true';
+          td.dataset.r = ri;
+          td.dataset.c = c;
+          td.textContent = (r && r[c] !== undefined && r[c] !== null) ? r[c] : '';
+          tr.appendChild(td);
+        }
+        excelTbody.appendChild(tr);
+      });
+    }
+
+    function workbookFromTable() {
+      const rows = [];
+      const trs = excelTbody.querySelectorAll('tr');
+      trs.forEach(tr => {
+        const cols = [];
+        tr.querySelectorAll('td').forEach(td => cols.push(td.textContent || ''));
+        rows.push(cols);
+      });
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+      return wb;
+    }
+
+    // Try to auto-fetch Promo_Codes.xlsx from same folder (works if served over http)
+    (function tryAutoLoad() {
+      fetch('Promo_Codes.xlsx').then(r => {
+        if (!r.ok) throw new Error('not ok');
+        return r.arrayBuffer();
+      }).then(ab => {
+        try {
+          currentWorkbook = XLSX.read(new Uint8Array(ab), { type: 'array' });
+          populatePromoSelectFromWorkbook(currentWorkbook);
+          // also render into editor and open modal so user can see/edit immediately
+          renderWorkbookToTable(currentWorkbook);
+          excelModal.classList.remove('hidden');
+          showToast('Promo_Codes.xlsx loaded automatically.');
+        } catch (err) {
+          console.error('Auto-load parse error', err);
+        }
+      }).catch(() => {
+        // ignore: user can load via button
+        console.info('Auto-load failed; use Load Promo Codes button or open the editor.');
+      });
+    })();
+
+    // Handlers
+    loadPromoBtn.addEventListener('click', () => promoFileInput.click());
+    promoFileInput.addEventListener('change', (e) => {
+      const f = e.target.files && e.target.files[0];
+      if (!f) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const wb = XLSX.read(ev.target.result, { type: 'binary' });
+          currentWorkbook = wb;
+          populatePromoSelectFromWorkbook(wb);
+        } catch (err) { console.error(err); showToast('Failed to parse file.'); }
+      };
+      reader.readAsBinaryString(f);
+    });
+
+    // Excel editor modal open
+    viewExcelBtn.addEventListener('click', () => {
+      excelModal.classList.remove('hidden');
+      // attempt to load current workbook into editor
+      if (currentWorkbook) renderWorkbookToTable(currentWorkbook);
+      else {
+        showToast('No workbook loaded. Click Load Excel inside the editor.');
+      }
+    });
+
+    excelCloseBtn.addEventListener('click', () => excelModal.classList.add('hidden'));
+    excelCloseSaveBtn.addEventListener('click', () => excelModal.classList.add('hidden'));
+
+    excelLoadBtn.addEventListener('click', () => excelFileInput.click());
+    excelFileInput.addEventListener('change', (e) => {
+      const f = e.target.files && e.target.files[0];
+      if (!f) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const wb = XLSX.read(ev.target.result, { type: 'binary' });
+          currentWorkbook = wb;
+          renderWorkbookToTable(wb);
+          showToast('Workbook loaded into editor.');
+        } catch (err) { console.error(err); showToast('Failed to parse workbook'); }
+      };
+      reader.readAsBinaryString(f);
+    });
+
+    excelDownloadBtn.addEventListener('click', () => {
+      try {
+        const wb = workbookFromTable();
+        XLSX.writeFile(wb, 'Promo_Codes_updated.xlsx');
+        showToast('Downloaded edited workbook.');
+      } catch (err) { console.error(err); showToast('Error creating workbook.'); }
+    });
+
+    excelReplaceSelectBtn.addEventListener('click', () => {
+      try {
+        // read second column from editor table
+        const codes = [];
+        const trs = excelTbody.querySelectorAll('tr');
+        trs.forEach(tr => {
+          const tds = tr.querySelectorAll('td');
+          if (tds.length >= 2) {
+            const v = tds[1].textContent && tds[1].textContent.trim();
+            if (v) codes.push(v);
+          }
+        });
+        const unique = [...new Set(codes)];
+        promoSelect.innerHTML = '<option value="" selected>-- No promo --</option>';
+        unique.forEach(code => {
+          const opt = document.createElement('option'); opt.value = code; opt.textContent = code; promoSelect.appendChild(opt);
+        });
+        showToast('Promo select updated from editor.');
+      } catch (err) { console.error(err); showToast('Error updating promo select'); }
+    });
+
+    // allow clicking outside modal to close
+    window.addEventListener('click', (e) => {
+      if (e.target == excelModal) excelModal.classList.add('hidden');
+    });
+  </script>
+</body>
+
+</html>

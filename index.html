@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>CINCO Academy — Sales Department System</title>
+    <link rel="icon" href="CincoLogo.png" type="image/png" />
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+      :root{--accent:#5620ad;--white:#f15825 ;--muted:#f3f4f6}
+      html,body{height:100%;margin:0;font-family:'Cairo',system-ui,Segoe UI,Roboto,Arial,sans-serif}
+      .hero{
+        height:100vh; 
+        display:flex;
+        align-items:center;
+        justify-content:center;
+          background-image:linear-gradient(rgba(0,0,0,.10),rgba(0,0,0,.10)),url('CincoBackground.png');
+        background-size:cover;background-position:center;
+        color:var(--white);
+        text-align:center;
+        padding:24px;
+      }
+      .box{max-width:920px;width:100%;background:rgba(154, 221, 255, 0.239);padding:28px;border-radius:14px;backdrop-filter:blur(4px)}
+      .logo{width:110px;height:110px;border-radius:14px;object-fit:cover;border:3px solid rgb(255, 255, 255);box-shadow:0 6px 18px rgba(0,0,0,0.4);margin:0 auto}
+      h1{margin:18px 0 6px;font-size:34px;font-weight:1000; font-family: 'Cairo', system-ui, Segoe UI, Roboto, Arial, sans-serif;}
+      p.lead{margin:0 0 24px;color:#000000; opacity:5; font-style: bold;}
+      .actions{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+      .btn{appearance:none;border:3px solid rgb(255, 1, 145); ;padding:14px 20px;border-radius:10px;font-weight:700;cursor:pointer;min-width:240px}
+      .btn.primary{background:var(--accent);color:#fff;box-shadow:0 8px 20px rgba(109,40,217,0.24)}
+      .btn.ghost{background:rgba(0, 61, 183, 0.585);color:#fff;border:3px solid rgb(255, 1, 145)}
+      .credit{margin-top:18px;color:rgba(255,255,255,0.85);font-size:13px}
+      @media (max-width:520px){h1{font-size:24px}.btn{min-width:200px;padding:12px}}
+    </style>
+  </head>
+  <body>
+    <main class="hero">
+      <div class="box">
+        <img class="logo" src="CincoLogo.png" alt="CINCO Academy logo" />
+        <h1>CINCO Academy</h1>
+        <p class="lead">Welcome — choose an action below to generate a receipt or a certificate.</p>
+
+        <div class="actions">
+          <a class="btn primary" href="GenerateRecipt.html">Generate Receipt for Student<br/>&#40;فاتوره&#41;</a>
+          <a class="btn ghost" href="GenerateCertificate.html">Generate Certificate<br/>&#40;شهاده&#41;</a>
+        </div>
+
+        <div class="credit">  This system is dedicated to the sales department and Student service. </div>
+      </div>
+    </main>
+  </body>
+</html>
